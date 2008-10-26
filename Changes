@@ -1,5 +1,8 @@
 Revision history for App-ZofCMS-Plugin-FormChecker
 
+0.0201  October 20, 2008
+        Added a feature to check a parameter against another one, e.g. password retypes
+
 0.0101  October 20, 2008
         First version, released on an unsuspecting world.
 

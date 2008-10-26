@@ -3,7 +3,7 @@ package App::ZofCMS::Plugin::FormChecker;
 use warnings;
 use strict;
 
-our $VERSION = '0.0101';
+our $VERSION = '0.0201';
 
 sub new { bless {}, shift }
 
@@ -40,9 +40,12 @@ sub process {
         elsif ( ref $rule eq 'ARRAY' ) {
             $rule = { map +( $_ => 1 ), @$rule };
         }
+        elsif ( ref $rule eq 'SCALAR' ) {
+            $rule = { param => $$rule };
+        }
 
         last
-            unless $self->_rule_ok( $param, $rule, $query->{ $param } );
+            unless $self->_rule_ok( $param, $rule, $query->{ $param }, $query );
     }
 
     unless ( $conf{no_fill} ) {
@@ -75,7 +78,7 @@ sub process {
 }
 
 sub _rule_ok {
-    my ( $self, $param, $rule, $value ) = @_;
+    my ( $self, $param, $rule, $value, $query ) = @_;
 
     my $name = defined $rule->{name} ? $rule->{name} : $param;
 
@@ -124,6 +127,15 @@ sub _rule_ok {
             unless exists $valid{$value};
     }
 
+    if ( $rule->{param} ) {
+        my $param_match = $query->{ $rule->{param} };
+        defined $param_match
+            or $param_match = '';
+
+        return $self->_fail( $name, 'param_error', $rule )
+            unless $value eq $param_match;
+    }
+
     return 1;
 }
 
@@ -141,6 +153,7 @@ sub _make_error {
         code_error        => "Parameter $name contains incorrect data",
         must_match_error  => "Parameter $name contains incorrect data",
         must_not_match_error => "Parameter $name contains incorrect data",
+        param_error          => "Parameter $name does not match parameter $rule->{param}",
         valid_values_error
             => "Parameter $name must be " . do {
                     my $last = pop @{ $rule->{valid_values} || [''] };
@@ -189,6 +202,7 @@ In ZofCMS template or main config file:
                 must_match      => qr/foo|bar/,
                 must_not_match  => qr/foos/,
                 must_match_error => 'Param4 must contain either foo or bar but not foos',
+                param           => 'param2',
             },
             param5 => {
                 valid_values        => [ qw/foo bar baz/ ],
@@ -350,7 +364,8 @@ description. B<Defaults to:> C<plug_form_q_> (note the underscore at the very en
 This is the "heart" of the plugin, the place where you specify the rules for checking.
 The C<rules> key takes a hashref as a value. The keys of that hashref are the names
 of the query parameters that you wish to check. The values of those keys are the
-"rulesets". The values can be either a string, regex (C<qr//>), arrayref, subref or a hashref;
+"rulesets". The values can be either a string, regex (C<qr//>), arrayref, subref, scalarref
+or a hashref;
 If the value is NOT a hashref it will be changed into hashref
 as follows (the actual meaning of resulting hashrefs is described below):
 
@@ -381,6 +396,12 @@ as follows (the actual meaning of resulting hashrefs is described below):
     # same as
     param => { code => sub { time() % 2 } },
 
+=head4 a scalarref
+
+    param => \'param2',
+    # same as
+    param => { param => 'param2' },
+
 =head3 C<rules> RULESETS
 
 The rulesets (values of C<rules> hashref) have keys that define the type of the rule and
@@ -399,6 +420,7 @@ Here is the list of all valid ruleset keys:
             valid_values    => [ qw/foo bar baz/ ], # value must be one from the given list
             code            => sub { time() %2 }, # return from the sub determines pass/fail
             select          => 1, # flag for "filling", see no_fill key above
+            param           => 'param1',
             num_error       => 'Numbers only!', # custom error if num rule failed
             mandatory_error => '', # same for if parameter is missing and not optional.
             must_match_error => '', # same for must_match rule
@@ -407,6 +429,7 @@ Here is the list of all valid ruleset keys:
             min_error            => '', # same for min rule
             code_error           => '', # same for code rule
             valid_values_error   => '', # same for valid_values rule
+            param_error          => '', # same fore param rule
         },
     }
 
@@ -477,6 +500,15 @@ Here you can let your soul dance to your desire. Takes a subref as a value. The 
 contain only one element - the value of the parameter that is being tested.
 If the sub returns a true value - the check will be considered successfull. If the
 sub returns a false value, then test fails and form check stops and errors.
+
+=head4 C<param>
+
+    param => 'param2',
+
+Takes a string as an argument; that string will be interpreted as a name of a query parameter.
+Values of the parameter that is currently being inspected and the one given as a value must
+match in order for the rule to succeed. The example above indicates that query parameter
+C<param> C<eq> query parameter C<param2>.
 
 =head4 C<select>
 
@@ -551,6 +583,23 @@ This is the error for C<valid_values> rule. B<Defaults to:>
 C<Parameter $name must be $list_of_values> where C<$list_of_values> is the list of the
 values you specified in the arrayref given to C<valid_values> rule joined by commas and
 the last element joined by word "or".
+
+=head4 C<param_error>
+
+    param_error => "Two passwords do not match",
+
+This is the error for C<param> rule. You pretty much always would want to set a custom
+error message here as it B<defaults to:> C<< Parameter $name does not match parameter
+$rule->{param} >> where C<< $rule->{param} >> is the value you set to C<param> rule.
+
+=head1 HTML::Template VARIABLES
+
+    <tmpl_if name="plug_form_checker_error">
+        <p class="error"><tmpl_var name="plug_form_checker_error"></p>
+    </tmpl_if>
+
+If the form values failed any of your checks, the plugin will set C<plug_form_checker_error>
+key in C<{t}> special key explaining the error. The sample usage of this is presented above.
 
 =head1 AUTHOR
 
