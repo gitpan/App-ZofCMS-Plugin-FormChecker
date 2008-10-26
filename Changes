@@ -1,5 +1,9 @@
 Revision history for App-ZofCMS-Plugin-FormChecker
 
+0.0301  October 20, 2008
+        Added an option to execute the code on "ok" form, as well
+        as added extra parameters to "code" rule
+
 0.0201  October 20, 2008
         Added a feature to check a parameter against another one, e.g. password retypes
 

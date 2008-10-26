@@ -3,7 +3,7 @@ package App::ZofCMS::Plugin::FormChecker;
 use warnings;
 use strict;
 
-our $VERSION = '0.0201';
+our $VERSION = '0.0301';
 
 sub new { bless {}, shift }
 
@@ -25,6 +25,10 @@ sub process {
 
     return
         unless $query->{ $conf{trigger} };
+
+    $self->template( $template );
+    $self->query( $query );
+    $self->config( $config );
 
     keys %{ $conf{rules} };
     while ( my ( $param, $rule ) = each %{ $conf{rules} } ) {
@@ -70,6 +74,9 @@ sub process {
     }
     else {
         $template->{ $conf{ok_key} }{plug_form_checker_ok} = 1;
+        if ( exists $conf{ok_code} ) {
+            $conf{ok_code}->( $template, $query, $config );
+        }
         if ( exists $conf{ok_redirect} ) {
             print $config->cgi->redirect( $conf{ok_redirect} );
             exit;
@@ -116,7 +123,7 @@ sub _rule_ok {
 
     if ( $rule->{code} ) {
         return $self->_fail( $name, 'code_error', $rule )
-            unless $rule->{code}->( $value );
+            unless $rule->{code}->( $value, map $self->$_, qw/template query config/ );
     }
 
     if ( my @values = @{ $rule->{valid_values} || [] } ) {
@@ -175,6 +182,23 @@ sub _error {
     return shift->{FAIL};
 }
 
+sub template {
+    my $self = shift;
+    @_ and $self->{TEMPLATE} = shift;
+    return $self->{TEMPLATE};
+}
+
+sub config {
+    my $self = shift;
+    @_ and $self->{CONFIG} = shift;
+    return $self->{CONFIG};
+}
+
+sub query {
+    my $self = shift;
+    @_ and $self->{QUERY} = shift;
+    return $self->{QUERY};
+}
 
 1;
 __END__
@@ -191,6 +215,7 @@ In ZofCMS template or main config file:
     plug_form_checker => {
         trigger     => 'some_param',
         ok_key      => 't',
+        ok_code     => sub { die "All ok!" },
         fill_prefix => 'form_checker_',
         rules       => {
             param1 => 'num',
@@ -238,6 +263,7 @@ You obviously would want to include the plugin in the list of plugins to execute
         trigger     => 'plug_form_checker',
         ok_key      => 'd',
         ok_redirect => '/some-page',
+        ok_code     => sub { die "All ok!" },
         no_fill     => 1,
         fill_prefix => 'plug_form_q_',
         rules       => {
@@ -294,6 +320,19 @@ C<d> ("data" ZofCMS template special key).
 B<Optional>. If specified, the plugin will automatically redirect the user to the
 URL specified as a value to C<ok_redirect> key. Note that the plugin will C<exit()> right
 after printing the redirect header. B<By default> not specified.
+
+=head3 C<ok_code>
+
+    ok_code => sub {
+        my ( $template, $query, $config ) = @_;
+        $template->{t}{foo} = "Kewl!";
+    }
+
+B<Optional>. Takes a subref as a value. When specfied that subref will be executed if the
+form passes all the checks. The C<@_> will contain the following (in that order):
+hashref of ZofCMS Template, hashref of query parameters and L<App::ZofCMS::Config> object.
+B<By default> is not specified. Note: if you specify C<ok_code> B<and> C<ok_redirect> the
+code will be executed and only then user will be redirected.
 
 =head3 C<no_fill>
 
@@ -497,8 +536,9 @@ Takes an arrayref as a value. Query parameter's value must be one of the items i
     code => sub { time() %2 },
 
 Here you can let your soul dance to your desire. Takes a subref as a value. The C<@_> will
-contain only one element - the value of the parameter that is being tested.
-If the sub returns a true value - the check will be considered successfull. If the
+contain the following (in that order): - the value of the parameter that is being tested,
+the hashref of ZofCMS Template, hashref of query parameters and the L<App::ZofCMS::Config>
+object. If the sub returns a true value - the check will be considered successfull. If the
 sub returns a false value, then test fails and form check stops and errors.
 
 =head4 C<param>
