@@ -3,7 +3,7 @@ package App::ZofCMS::Plugin::FormChecker;
 use warnings;
 use strict;
 
-our $VERSION = '0.0301';
+our $VERSION = '0.0311';
 
 sub new { bless {}, shift }
 
@@ -71,6 +71,9 @@ sub process {
 
     if ( defined(my $error = $self->_error) ) {
         $template->{t}{plug_form_checker_error} = $error;
+        if ( exists $conf{fail_code} ) {
+            $conf{fail_code}->( $template, $query, $config, $error );
+        }
     }
     else {
         $template->{ $conf{ok_key} }{plug_form_checker_ok} = 1;
@@ -237,6 +240,14 @@ In ZofCMS template or main config file:
         },
     },
 
+In your L<HTML::Template> template:
+
+    <tmpl_if name="plug_form_checker_error">
+        <p class="error"><tmpl_var name="plug_form_checker_error"></p>
+    </tmpl_if>
+
+    <form ......
+
 =head1 DESCRIPTION
 
 The module is a plugin for L<App::ZofCMS> that provides nifteh form checking.
@@ -263,6 +274,7 @@ You obviously would want to include the plugin in the list of plugins to execute
         trigger     => 'plug_form_checker',
         ok_key      => 'd',
         ok_redirect => '/some-page',
+        fail_code   => sub { die "Not ok!" },
         ok_code     => sub { die "All ok!" },
         no_fill     => 1,
         fill_prefix => 'plug_form_q_',
@@ -333,6 +345,20 @@ form passes all the checks. The C<@_> will contain the following (in that order)
 hashref of ZofCMS Template, hashref of query parameters and L<App::ZofCMS::Config> object.
 B<By default> is not specified. Note: if you specify C<ok_code> B<and> C<ok_redirect> the
 code will be executed and only then user will be redirected.
+
+=head3 C<fail_code>
+
+    fail_code => sub {
+        my ( $template, $query, $config, $error ) = @_;
+        $template->{t}{foo} = "We got an error: $error";
+    }
+
+B<Optional>. Takes a subref as a value. When specfied that subref will be executed if the
+form fails any of the checks. The C<@_> will contain the following (in that order):
+hashref of ZofCMS Template, hashref of query parameters, L<App::ZofCMS::Config> object and
+the scalar contain the error that would also go into C<{t}{plug_form_checker_error}> in
+ZofCMS template.
+B<By default> is not specified.
 
 =head3 C<no_fill>
 

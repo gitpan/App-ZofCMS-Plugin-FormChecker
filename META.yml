@@ -1,6 +1,6 @@
 ---
 name: App-ZofCMS-Plugin-FormChecker
-version: 0.0301
+version: 0.0311
 author:
   - "Zoffix <'zoffix@cpan.org'>"
 abstract: plugin to check HTML form data.
@@ -14,7 +14,7 @@ build_requires:
 provides:
   App::ZofCMS::Plugin::FormChecker:
     file: lib/App/ZofCMS/Plugin/FormChecker.pm
-    version: 0.0301
+    version: 0.0311
 generated_by: Module::Build version 0.2808
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html

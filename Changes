@@ -1,5 +1,9 @@
 Revision history for App-ZofCMS-Plugin-FormChecker
 
+0.0311  October 20, 2008
+        Added the 'fail_code' option.
+        Fixed up some missing documentation
+
 0.0301  October 20, 2008
         Added an option to execute the code on "ok" form, as well
         as added extra parameters to "code" rule
