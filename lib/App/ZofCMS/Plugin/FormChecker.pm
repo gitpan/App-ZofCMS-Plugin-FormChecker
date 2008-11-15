@@ -3,7 +3,7 @@ package App::ZofCMS::Plugin::FormChecker;
 use warnings;
 use strict;
 
-our $VERSION = '0.0311';
+our $VERSION = '0.0312';
 
 sub new { bless {}, shift }
 
@@ -317,10 +317,10 @@ C<plug_form_checker>
     ok_key => 'd',
 
 B<Optional>. If the form passed all the checks plugin will set a B<second level>
-key C<plug_form_checker> to a true value. The C<ok_key> parameter specifies the
+key C<plug_form_checker_ok> to a true value. The C<ok_key> parameter specifies the
 B<first level> key in ZofCMS template where to put the C<plug_form_checker> key. For example,
 you can set C<ok_key> to C<'t'> and then in your L<HTML::Template> template use
-C<< <tmpl_if name="plug_form_checker">FORM OK!</tmpl_if> >>... but, beware of using
+C<< <tmpl_if name="plug_form_checker_ok">FORM OK!</tmpl_if> >>... but, beware of using
 the C<'t'> key when you are also using L<App::ZofCMS::QueryToTemplate> plugin, as someone
 could avoid proper form checking by passing fake query parameter. B<Defaults to:>
 C<d> ("data" ZofCMS template special key).

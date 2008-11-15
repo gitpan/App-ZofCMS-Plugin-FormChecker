@@ -1,6 +1,9 @@
 Revision history for App-ZofCMS-Plugin-FormChecker
 
-0.0311  October 20, 2008
+0.0312  November 15, 2008
+        Fixed discrepancy in the docs
+
+0.0311  November 15, 2008
         Added the 'fail_code' option.
         Fixed up some missing documentation
 
