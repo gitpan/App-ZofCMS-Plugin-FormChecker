@@ -1,5 +1,8 @@
 Revision history for App-ZofCMS-Plugin-FormChecker
 
+0.0321  November 21, 2008
+        Added the 'all_errors' option.
+
 0.0312  November 15, 2008
         Fixed discrepancy in the docs
 

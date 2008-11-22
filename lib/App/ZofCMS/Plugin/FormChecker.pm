@@ -3,7 +3,7 @@ package App::ZofCMS::Plugin::FormChecker;
 use warnings;
 use strict;
 
-our $VERSION = '0.0312';
+our $VERSION = '0.0321';
 
 sub new { bless {}, shift }
 
@@ -18,6 +18,7 @@ sub process {
         trigger => 'plug_form_checker',
         ok_key  => 'd',
         no_fill => 0,
+        all_errors => 0,
         fill_prefix => 'plug_form_q_',
         %{ delete $template->{plug_form_checker}     || {} },
         %{ delete $config->conf->{plug_form_checker} || {} },
@@ -29,6 +30,7 @@ sub process {
     $self->template( $template );
     $self->query( $query );
     $self->config( $config );
+    $self->plug_conf( \%conf );
 
     keys %{ $conf{rules} };
     while ( my ( $param, $rule ) = each %{ $conf{rules} } ) {
@@ -48,8 +50,7 @@ sub process {
             $rule = { param => $$rule };
         }
 
-        last
-            unless $self->_rule_ok( $param, $rule, $query->{ $param }, $query );
+        $self->_rule_ok( $param, $rule, $query->{ $param }, $query );
     }
 
     unless ( $conf{no_fill} ) {
@@ -177,12 +178,18 @@ sub _make_error {
 sub _fail {
     my ( $self, $name, $err_name, $rule ) = @_;
 
-    $self->{FAIL} = $self->_make_error( $name, $err_name, $rule );
+    push @{ $self->{FAIL} }, $self->_make_error( $name, $err_name, $rule );
     return;
 }
 
 sub _error {
-    return shift->{FAIL};
+    my $self = shift;
+    return
+        unless defined $self->{FAIL};
+
+    return $self->plug_conf->{all_errors}
+        ? [ map +{ error => $_ }, @{ $self->{FAIL} || [] } ]
+        : shift @{ $self->{FAIL} || [] };
 }
 
 sub template {
@@ -202,7 +209,11 @@ sub query {
     @_ and $self->{QUERY} = shift;
     return $self->{QUERY};
 }
-
+sub plug_conf {
+    my $self = shift;
+    @_ and $self->{PLUG_CONF} = shift;
+    return $self->{PLUG_CONF};
+}
 1;
 __END__
 
@@ -356,9 +367,20 @@ code will be executed and only then user will be redirected.
 B<Optional>. Takes a subref as a value. When specfied that subref will be executed if the
 form fails any of the checks. The C<@_> will contain the following (in that order):
 hashref of ZofCMS Template, hashref of query parameters, L<App::ZofCMS::Config> object and
-the scalar contain the error that would also go into C<{t}{plug_form_checker_error}> in
-ZofCMS template.
+(if the C<all_errors> is set to a false value) the scalar contain the error that would
+also go into C<{t}{plug_form_checker_error}> in
+ZofCMS template; if C<all_errors> is set to a true value, than C<$error> will be an arrayref
+of hashrefs that have only one key - C<error>, value of which is the error message.
 B<By default> is not specified.
+
+=head3 C<all_errors>
+
+    all_errors => 1,
+
+B<Optional>. Takes either true or false values. When set to a false value plugin will
+stop processing as soon as it finds the first error and will report it to the user. When
+set to a true value will find all errors and report all of them; see C<HTML::Template
+VARIABLES> section below for samples. B<Defaults to:> C<0>
 
 =head3 C<no_fill>
 
@@ -664,13 +686,25 @@ $rule->{param} >> where C<< $rule->{param} >> is the value you set to C<param> r
         <p class="error"><tmpl_var name="plug_form_checker_error"></p>
     </tmpl_if>
 
+    # or, if 'all_errors' is turned on:
+    <tmpl_if name="plug_form_checker_error">
+        <tmpl_loop name="plug_form_checker_error">
+            <p class="error"><tmpl_var name="error"></p>
+        </tmpl_loop>
+    </tmpl_if>
+
 If the form values failed any of your checks, the plugin will set C<plug_form_checker_error>
-key in C<{t}> special key explaining the error. The sample usage of this is presented above.
+key in C<{t}> special key explaining the error. If C<all_errors> option is turned on, then
+the plugin will set C<plug_form_checker_error> to a data structure that you can feed
+into C<< <tmpl_loop name=""> >> where the C<< <tmpl_var name="error"> >> will be replaced
+with the error message. The sample usage of this is presented above.
 
 =head1 AUTHOR
 
 'Zoffix, C<< <'zoffix at cpan.org'> >>
 (L<http://zoffix.com/>, L<http://haslayout.net/>, L<http://zofdesign.com/>)
+
+Patches by Simon aka jonsmith1982
 
 =head1 BUGS
 
