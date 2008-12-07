@@ -3,7 +3,7 @@ package App::ZofCMS::Plugin::FormChecker;
 use warnings;
 use strict;
 
-our $VERSION = '0.0321';
+our $VERSION = '0.0331';
 
 sub new { bless {}, shift }
 
@@ -91,10 +91,23 @@ sub process {
 sub _rule_ok {
     my ( $self, $param, $rule, $value, $query ) = @_;
 
-    my $name = defined $rule->{name} ? $rule->{name} : $param;
+    my $name = defined $rule->{name} ? $rule->{name} : ucfirst $param;
 
     unless ( defined $value and length $value ) {
         if ( $rule->{optional} ) {
+            if ( $rule->{either_or} ) {
+                my $which = ref $rule->{either_or}
+                          ? $rule->{either_or}
+                          : [ $rule->{either_or} ];
+
+                for ( @$which, $param ) {
+                    if ( defined $query->{$_} and length $query->{$_} ) {
+                        return 1;
+                    }
+                }
+
+                return $self->_fail( $name, 'either_or_error', $rule );
+            }
             return 1;
         }
         else {
@@ -165,6 +178,7 @@ sub _make_error {
         must_match_error  => "Parameter $name contains incorrect data",
         must_not_match_error => "Parameter $name contains incorrect data",
         param_error          => "Parameter $name does not match parameter $rule->{param}",
+        either_or_error   => "Parameter $name must contain data if other parameters are not set",
         valid_values_error
             => "Parameter $name must be " . do {
                     my $last = pop @{ $rule->{valid_values} || [''] };
@@ -187,9 +201,13 @@ sub _error {
     return
         unless defined $self->{FAIL};
 
-    return $self->plug_conf->{all_errors}
-        ? [ map +{ error => $_ }, @{ $self->{FAIL} || [] } ]
-        : shift @{ $self->{FAIL} || [] };
+    if ( $self->plug_conf->{all_errors} ) {
+        my %errors = map +( $_ => 1 ), @{ $self->{FAIL} || [] };
+        return [ map +{ error => $_ }, sort keys %errors ];
+    }
+    else {
+        return shift @{ $self->{FAIL} || [] };
+    }
 }
 
 sub template {
@@ -500,6 +518,7 @@ Here is the list of all valid ruleset keys:
             name            => 'Parameter', # the name of this param to use in error messages
             num             => 1, # value must be numbers-only
             optional        => 1, # parameter is optional
+            either_or       => [ qw/foo bar baz/ ], # param or foo or bar or baz must be set
             must_match      => qr/foo/, # value must match given regex
             must_not_match  => qr/bar/, # value must NOT match the given regex
             max             => 20, # value must not exceed 20 characters in length
@@ -515,6 +534,7 @@ Here is the list of all valid ruleset keys:
             max_error            => '', # same for max rule
             min_error            => '', # same for min rule
             code_error           => '', # same for code rule
+            either_or_error      => '', # same for either_or rule
             valid_values_error   => '', # same for valid_values rule
             param_error          => '', # same fore param rule
         },
@@ -527,7 +547,8 @@ You can mix and match the rules for perfect tuning.
     name => 'Decent name',
 
 This is not actually a rule but the text to use for the name of the parameter in error
-messages. If not specified the actual parameter name will be used.
+messages. If not specified the actual parameter name - on which C<ucfirst()> will be run -
+will be used.
 
 =head4 C<num>
 
@@ -546,6 +567,21 @@ other rules along with this one, e.g.:
     num      => 1,
 
 Means, query parameter is optional, B<but if it is given> it must contain only digits.
+
+=head4 C<either_or>
+
+    optional    => 1, # must use this
+    either_or   => 'foo',
+
+    optional    => 1, # must use this
+    either_or   => [ qw/foo bar baz/ ],
+
+The C<optional> rul B<must be set to a true value> in order for C<either_or> rule to work.
+The rule takes either a string or an arrayref as a value. Specifying a string as a value is
+the same as specifying a hashref with just that string in it. Each string in an arrayref
+represents the name of a query parameter. In order for the rule to succeed B<either> one
+of the parameters must be set. It's a bit messy, but you must use the C<optional> rule
+as well as list the C<either_or> rule for every parameter that is tested for "either or" rule.
 
 =head4 C<must_match>
 
@@ -662,6 +698,13 @@ C<Parameter $name must be at least $rule->{min} characters long>
 
 This is the error for C<code> rule. B<Defaults to:>
 C<Parameter $name contains incorrect data>
+
+=head4 C<either_or_error>
+
+    either_or_error => "You must specify either Foo or Bar",
+
+This is the error for C<either_or> rule.
+B<Defaults to:> C<Parameter $name must contain data if other parameters are not set>
 
 =head4 C<valid_values_error>
 
