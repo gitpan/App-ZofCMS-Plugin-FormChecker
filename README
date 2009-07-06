@@ -1,6 +1,6 @@
 App-ZofCMS-Plugin-FormChecker
 
-
+The module is a plugin for L<App::ZofCMS> that provides nifteh form checking.
 
 INSTALLATION
 

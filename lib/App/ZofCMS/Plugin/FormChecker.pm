@@ -3,7 +3,7 @@ package App::ZofCMS::Plugin::FormChecker;
 use warnings;
 use strict;
 
-our $VERSION = '0.0331';
+our $VERSION = '0.0341';
 
 sub new { bless {}, shift }
 
@@ -31,6 +31,11 @@ sub process {
     $self->query( $query );
     $self->config( $config );
     $self->plug_conf( \%conf );
+
+    if ( ref $conf{rules} eq 'CODE' ) {
+        $conf{rules} = $conf{rules}->( $template, $query, $config )
+            or return;
+    }
 
     keys %{ $conf{rules} };
     while ( my ( $param, $rule ) = each %{ $conf{rules} } ) {
@@ -467,7 +472,13 @@ description. B<Defaults to:> C<plug_form_q_> (note the underscore at the very en
         },
 
 This is the "heart" of the plugin, the place where you specify the rules for checking.
-The C<rules> key takes a hashref as a value. The keys of that hashref are the names
+The C<rules> key takes a hashref or a subref as a value. If the value is a subref,
+its C<@_> will contain (in that order) ZofCMS Template hashref, query parameters hashref
+and L<App::ZofCMS::Config> object. The return value of the subref will be assigned
+to C<rules> parameter and therefore must be a hashref; alternatively the sub may
+return an C<undef>, in which case the plugin will stop executing.
+
+The keys of C<rules> hashref are the names
 of the query parameters that you wish to check. The values of those keys are the
 "rulesets". The values can be either a string, regex (C<qr//>), arrayref, subref, scalarref
 or a hashref;

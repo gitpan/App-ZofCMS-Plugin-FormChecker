@@ -1,0 +1,27 @@
+{
+    plugins => [ qw/FormChecker/ ],
+    plug_form_checker => {
+        trigger     => 'some_param',
+        ok_key      => 't',
+        ok_code     => sub { die "All ok!" },
+        fill_prefix => 'form_checker_',
+        rules       => {
+            param1 => 'num',
+            param2 => qr/foo|bar/,
+            param3 => [ qw/optional num/ ],
+            param4 => {
+                optional        => 1,
+                select          => 1,
+                must_match      => qr/foo|bar/,
+                must_not_match  => qr/foos/,
+                must_match_error => 'Param4 must contain either foo or bar but not foos',
+                param           => 'param2',
+            },
+            param5 => {
+                valid_values        => [ qw/foo bar baz/ ],
+                valid_values_error  => 'Param5 must be foo, bar or baz',
+            },
+            param6 => sub { time() % 2 }, # return true or false values
+        },
+    },
+}

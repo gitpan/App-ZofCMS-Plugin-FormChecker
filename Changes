@@ -1,5 +1,9 @@
 Revision history for App-ZofCMS-Plugin-FormChecker
 
+0.0341  July 5, 2009
+        Added missing example
+        Added support for subrefs as C<rules> value.
+
 0.0331  December 7, 2008
         Added the 'either_or' rule
         Added ucfirst() on parameter name if C<name> "rule" is not specified
