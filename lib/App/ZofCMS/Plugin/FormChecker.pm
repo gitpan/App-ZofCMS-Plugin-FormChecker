@@ -3,7 +3,7 @@ package App::ZofCMS::Plugin::FormChecker;
 use warnings;
 use strict;
 
-our $VERSION = '0.0341';
+our $VERSION = '0.0342';
 
 sub new { bless {}, shift }
 
@@ -239,6 +239,8 @@ sub plug_conf {
 }
 1;
 __END__
+
+=encoding utf8
 
 =head1 NAME
 

@@ -1,30 +1,34 @@
 Revision history for App-ZofCMS-Plugin-FormChecker
 
-0.0341  July 5, 2009
-        Added missing example
-        Added support for subrefs as C<rules> value.
+0.0342  2013-11-09
+        - Minor fixes to comply with specs and Kwalitee game
 
-0.0331  December 7, 2008
-        Added the 'either_or' rule
-        Added ucfirst() on parameter name if C<name> "rule" is not specified
+0.0341  2009-07-05
+        - Added missing example
+        - Added support for subrefs as C<rules> value.
 
-0.0321  November 21, 2008
-        Added the 'all_errors' option.
+0.0331  2008-12-07
+        - Added the 'either_or' rule
+        - Added ucfirst() on parameter name
+          if C<name> "rule" is not specified
 
-0.0312  November 15, 2008
-        Fixed discrepancy in the docs
+0.0321  2008-11-21
+        - Added the 'all_errors' option.
 
-0.0311  November 15, 2008
-        Added the 'fail_code' option.
-        Fixed up some missing documentation
+0.0312  2008-11-15
+        - Fixed discrepancy in the docs
 
-0.0301  October 20, 2008
-        Added an option to execute the code on "ok" form, as well
-        as added extra parameters to "code" rule
+0.0311  2008-11-15
+        - Added the 'fail_code' option.
+        - Fixed up some missing documentation
 
-0.0201  October 20, 2008
-        Added a feature to check a parameter against another one, e.g. password retypes
+0.0301  2008-10-20
+        - Added an option to execute the code on "ok" form, as well
+          as added extra parameters to "code" rule
 
-0.0101  October 20, 2008
-        First version, released on an unsuspecting world.
+0.0201  2008-10-20
+        - Added a feature to check a parameter against another one, e.g. password retypes
+
+0.0101  2008-10-20
+        - First version, released on an unsuspecting world.
 

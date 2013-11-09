@@ -1,0 +1,47 @@
+{
+   "abstract" : "plugin to check HTML form data.",
+   "author" : [
+      "Zoffix <'zoffix@cpan.org'>"
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "Module::Build version 0.4007, CPAN::Meta::Converter version 2.132830",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "App-ZofCMS-Plugin-FormChecker",
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Test::More" : "0"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "Module::Build" : "0"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "App::ZofCMS" : "0.0105",
+            "perl" : "5.006"
+         }
+      }
+   },
+   "provides" : {
+      "App::ZofCMS::Plugin::FormChecker" : {
+         "file" : "lib/App/ZofCMS/Plugin/FormChecker.pm",
+         "version" : "0.0342"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ]
+   },
+   "version" : "0.0342"
+}
